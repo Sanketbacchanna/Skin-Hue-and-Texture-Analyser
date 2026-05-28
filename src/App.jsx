@@ -41,9 +41,6 @@ function App() {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setStream(mediaStream);
       setCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
     } catch (err) {
       console.error("Error accessing camera:", err);
       alert("Could not access the camera. Please allow camera permissions in your browser.");
@@ -72,6 +69,12 @@ function App() {
       simulateAnalysis(imageDataUrl);
     }
   };
+
+  useEffect(() => {
+    if (cameraActive && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [cameraActive, stream]);
 
   useEffect(() => {
     return () => {
