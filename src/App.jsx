@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Upload, Activity, Thermometer, Droplets, Wind, AlertCircle, RefreshCw, Layers, Maximize } from 'lucide-react';
+import { Camera, Upload, Activity, Thermometer, Droplets, Wind, AlertCircle, RefreshCw, Layers, Maximize, Download } from 'lucide-react';
 import './App.css';
 
 function App() {
@@ -12,6 +12,29 @@ function App() {
   const canvasRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [stream, setStream] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const startCamera = async () => {
     try {
@@ -117,6 +140,15 @@ function App() {
           <span className="nav-link active">Dashboard</span>
           <span className="nav-link">History</span>
           <span className="nav-link">Settings</span>
+          {deferredPrompt && (
+            <button 
+              className="btn-primary" 
+              onClick={handleInstallClick} 
+              style={{ padding: '0.4rem 1rem', fontSize: '0.9rem', marginLeft: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Download size={16} /> Install App
+            </button>
+          )}
         </div>
       </nav>
 
