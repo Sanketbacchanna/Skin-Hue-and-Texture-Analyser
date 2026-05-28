@@ -76,6 +76,16 @@ function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem('ayurvision_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ayurvision_history', JSON.stringify(history));
+  }, [history]);
+  
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -204,7 +214,7 @@ function App() {
       setIsAnalyzing(false);
       const profile = profiles[analysis.profileType];
       
-      setResults({
+      const newResult = {
         hue: { 
           dominant: profile.hue.dominant, 
           confidence: Math.floor(80 + Math.random() * 15), 
@@ -218,6 +228,12 @@ function App() {
           doshaIndication: profile.ayurvedic.baseDosha,
           prognosis: profile.ayurvedic.prognosis
         }
+      };
+
+      setResults(newResult);
+      setHistory(prev => {
+        const entry = { id: Date.now(), date: new Date().toLocaleString(), image: imgData, results: newResult };
+        return [entry, ...prev].slice(0, 10);
       });
     }, 1500);
   };
@@ -237,8 +253,8 @@ function App() {
           <span>AyurVision</span>
         </div>
         <div className="nav-links">
-          <span className="nav-link active">Dashboard</span>
-          <span className="nav-link">History</span>
+          <span className={`nav-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>Dashboard</span>
+          <span className={`nav-link ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>History</span>
           <span className="nav-link">Settings</span>
           {deferredPrompt && (
             <button 
@@ -253,7 +269,43 @@ function App() {
       </nav>
 
       <main className="main-content">
-        {!image && !results && !isAnalyzing ? (
+        {activeTab === 'history' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="history-container">
+            <h2 style={{color: 'var(--text-primary)', marginBottom: '2rem'}}>Scan History</h2>
+            {history.length === 0 ? (
+              <div style={{textAlign: 'center', padding: '3rem', background: 'rgba(255,255,255,0.02)', borderRadius: '16px'}}>
+                <Activity size={48} style={{opacity: 0.2, margin: '0 auto 1rem'}} />
+                <p style={{color: 'var(--text-secondary)'}}>No scans found in history.</p>
+                <button className="btn-primary" style={{marginTop: '1.5rem'}} onClick={() => setActiveTab('dashboard')}>Go to Scanner</button>
+              </div>
+            ) : (
+              <div className="history-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem'}}>
+                {history.map(item => (
+                  <div key={item.id} className="glass-card" style={{padding: '1.5rem'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center'}}>
+                      <span style={{color: 'var(--text-secondary)', fontSize: '0.85rem'}}>{item.date}</span>
+                      <span className="badge" style={{margin: 0}}>{item.results.hue.dominant}</span>
+                    </div>
+                    <img src={item.image} alt="Scan" style={{width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px', marginBottom: '1rem'}} />
+                    <p style={{color: 'var(--accent-primary)', marginBottom: '0.5rem', fontSize: '0.95rem'}}><strong>Varna:</strong> {item.results.ayurvedic.varna}</p>
+                    <p style={{color: 'var(--text-primary)', marginBottom: '1.5rem', fontSize: '0.95rem'}}><strong>Sparsha:</strong> {item.results.ayurvedic.sparsha}</p>
+                    <button className="btn-primary" style={{width: '100%', padding: '0.6rem', fontSize: '0.9rem', justifyContent: 'center'}} onClick={() => {
+                      setImage(item.image);
+                      setResults(item.results);
+                      setActiveTab('dashboard');
+                    }}>
+                      View Analysis Details
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {activeTab === 'dashboard' && (
+          <>
+            {!image && !results && !isAnalyzing ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -453,6 +505,8 @@ function App() {
               </div>
             </div>
           </motion.div>
+        )}
+        </>
         )}
 
         <div className="disclaimer">
