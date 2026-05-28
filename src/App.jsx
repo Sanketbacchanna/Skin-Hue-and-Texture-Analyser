@@ -3,6 +3,74 @@ import { motion } from 'framer-motion';
 import { Camera, Upload, Activity, Thermometer, Droplets, Wind, AlertCircle, RefreshCw, Layers, Maximize, Download } from 'lucide-react';
 import './App.css';
 
+const analyzeImage = (imgData) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const width = 100, height = 100;
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      let r = 0, g = 0, b = 0, count = 0;
+      let rs = [], gs = [], bs = [];
+
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i+3] > 0) {
+          r += data[i]; g += data[i+1]; b += data[i+2];
+          rs.push(data[i]); gs.push(data[i+1]); bs.push(data[i+2]);
+          count++;
+        }
+      }
+      
+      r = Math.floor(r / count) || 0;
+      g = Math.floor(g / count) || 0;
+      b = Math.floor(b / count) || 0;
+      
+      let rVar = 0, gVar = 0, bVar = 0;
+      for (let i = 0; i < count; i++) {
+        rVar += Math.pow(rs[i] - r, 2);
+        gVar += Math.pow(gs[i] - g, 2);
+        bVar += Math.pow(bs[i] - b, 2);
+      }
+      
+      const stdDev = Math.sqrt((rVar + gVar + bVar) / (3 * count)) || 0;
+      const smoothness = Math.max(0, Math.min(100, Math.floor(100 - (stdDev / 1.5))));
+      
+      const lightness = (Math.max(r, g, b) + Math.min(r, g, b)) / 2;
+      let profileType;
+      let vata = 33, pitta = 33, kapha = 33;
+      
+      if (lightness > 180 && Math.abs(r - g) < 30 && Math.abs(g - b) < 30) {
+        profileType = 1; // Kapha
+        kapha = 60 + Math.floor(Math.random()*15);
+        vata = 20; pitta = 20;
+      } else if (r > g + 40 && r > b + 40) {
+        profileType = 2; // Pitta
+        pitta = 60 + Math.floor(Math.random()*15);
+        vata = 20; kapha = 20;
+      } else if (r > b + 50 && g > b + 30) {
+        profileType = 0; // Vata
+        vata = 60 + Math.floor(Math.random()*15);
+        pitta = 30; kapha = 10;
+      } else {
+        profileType = 3; // Balanced
+        vata = 33 + Math.floor(Math.random()*10);
+        pitta = 33 + Math.floor(Math.random()*10);
+        kapha = 100 - vata - pitta;
+      }
+      
+      resolve({ rgb: `rgb(${r}, ${g}, ${b})`, smoothness, profileType, dosha: { vata, pitta, kapha } });
+    };
+    img.src = imgData;
+  });
+};
+
 function App() {
   const [image, setImage] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -98,70 +166,60 @@ function App() {
     }
   };
 
-  const simulateAnalysis = (imgData = image) => {
+  const simulateAnalysis = async (imgData = image) => {
     if (!imgData) return;
     setIsAnalyzing(true);
     
-    // Profiles for randomization
+    // Perform actual image analysis on the captured pixel data
+    const analysis = await analyzeImage(imgData);
+
     const profiles = [
-      {
-        hue: { dominant: 'Copper / Warm', rgb: 'rgb(184, 115, 51)' },
-        texture: { smoothness: 68, concerns: ['Mild dryness', 'Uneven tone'] },
-        touch: { temperature: 'Normal (36.5°C)', dryness: 'Moderate', swelling: 'None detected' },
-        ayurvedic: { varna: 'Tamra (Copper-like)', sparsha: 'Ruksha (Dry)', prognosis: 'Normal baseline. Mild Vata imbalance indicated by dryness.', baseDosha: { vata: 65, pitta: 45, kapha: 20 } }
+      { // 0: Vata
+        hue: { dominant: 'Copper / Warm', rgb: analysis.rgb },
+        texture: { smoothness: analysis.smoothness, concerns: analysis.smoothness < 70 ? ['Mild dryness', 'Uneven tone'] : ['None significant'] },
+        touch: { temperature: 'Normal (36.5°C)', dryness: analysis.smoothness < 70 ? 'Moderate' : 'Slight', swelling: 'None detected' },
+        ayurvedic: { varna: 'Tamra (Copper-like)', sparsha: 'Ruksha (Dry)', prognosis: 'Normal baseline. Mild Vata imbalance indicated by tone/texture.', baseDosha: analysis.dosha }
       },
-      {
-        hue: { dominant: 'Pale / Cool', rgb: 'rgb(225, 215, 205)' },
-        texture: { smoothness: 85, concerns: ['Excess sebum', 'Enlarged pores'] },
-        touch: { temperature: 'Cool (36.1°C)', dryness: 'None (Oily)', swelling: 'Slight puffiness' },
-        ayurvedic: { varna: 'Sveta (Pale/White)', sparsha: 'Snigdha (Oily/Smooth)', prognosis: 'Kapha dominance detected. Congestion and oiliness present.', baseDosha: { vata: 15, pitta: 30, kapha: 75 } }
+      { // 1: Kapha
+        hue: { dominant: 'Pale / Cool', rgb: analysis.rgb },
+        texture: { smoothness: analysis.smoothness, concerns: analysis.smoothness < 70 ? ['Excess sebum', 'Enlarged pores'] : ['None significant'] },
+        touch: { temperature: 'Cool (36.1°C)', dryness: 'None (Oily)', swelling: analysis.smoothness < 70 ? 'Slight puffiness' : 'None detected' },
+        ayurvedic: { varna: 'Sveta (Pale/White)', sparsha: 'Snigdha (Oily/Smooth)', prognosis: 'Kapha dominance detected. Congestion and oiliness present.', baseDosha: analysis.dosha }
       },
-      {
-        hue: { dominant: 'Reddish / Flushed', rgb: 'rgb(205, 92, 92)' },
-        texture: { smoothness: 72, concerns: ['Erythema (Redness)', 'Sensitivity'] },
-        touch: { temperature: 'Warm (37.2°C)', dryness: 'Slight', swelling: 'Mild inflammation' },
-        ayurvedic: { varna: 'Rakta (Reddish)', sparsha: 'Ushna (Warm/Soft)', prognosis: 'Pitta elevation. Heat and sensitivity observed in the dermal layer.', baseDosha: { vata: 25, pitta: 80, kapha: 15 } }
+      { // 2: Pitta
+        hue: { dominant: 'Reddish / Flushed', rgb: analysis.rgb },
+        texture: { smoothness: analysis.smoothness, concerns: analysis.smoothness < 70 ? ['Erythema (Redness)', 'Sensitivity'] : ['None significant'] },
+        touch: { temperature: 'Warm (37.2°C)', dryness: 'Slight', swelling: analysis.smoothness < 70 ? 'Mild inflammation' : 'None detected' },
+        ayurvedic: { varna: 'Rakta (Reddish)', sparsha: 'Ushna (Warm/Soft)', prognosis: 'Pitta elevation. Heat and sensitivity observed in the dermal layer.', baseDosha: analysis.dosha }
       },
-      {
-        hue: { dominant: 'Olive / Balanced', rgb: 'rgb(180, 160, 120)' },
-        texture: { smoothness: 92, concerns: ['None significant'] },
+      { // 3: Balanced
+        hue: { dominant: 'Olive / Balanced', rgb: analysis.rgb },
+        texture: { smoothness: analysis.smoothness, concerns: ['None significant'] },
         touch: { temperature: 'Normal (36.6°C)', dryness: 'Balanced', swelling: 'None detected' },
-        ayurvedic: { varna: 'Gaura (Clear/Fair)', sparsha: 'Sama (Balanced)', prognosis: 'Excellent baseline. Doshas appear well-balanced.', baseDosha: { vata: 33, pitta: 33, kapha: 34 } }
+        ayurvedic: { varna: 'Gaura (Clear/Fair)', sparsha: 'Sama (Balanced)', prognosis: 'Excellent baseline. Doshas appear well-balanced.', baseDosha: analysis.dosha }
       }
     ];
 
     setTimeout(() => {
       setIsAnalyzing(false);
-      
-      // Select a random profile
-      const profile = profiles[Math.floor(Math.random() * profiles.length)];
-      
-      // Add slight random variations to make it feel "live"
-      const vary = (val, maxVariance) => Math.min(100, Math.max(0, val + Math.floor(Math.random() * maxVariance * 2) - maxVariance));
+      const profile = profiles[analysis.profileType];
       
       setResults({
         hue: { 
           dominant: profile.hue.dominant, 
-          confidence: vary(90, 8), 
+          confidence: Math.floor(80 + Math.random() * 15), 
           rgb: profile.hue.rgb 
         },
-        texture: { 
-          smoothness: vary(profile.texture.smoothness, 5), 
-          concerns: profile.texture.concerns 
-        },
+        texture: profile.texture,
         touch: profile.touch,
         ayurvedic: {
           varna: profile.ayurvedic.varna,
           sparsha: profile.ayurvedic.sparsha,
-          doshaIndication: {
-            vata: vary(profile.ayurvedic.baseDosha.vata, 10),
-            pitta: vary(profile.ayurvedic.baseDosha.pitta, 10),
-            kapha: vary(profile.ayurvedic.baseDosha.kapha, 10)
-          },
+          doshaIndication: profile.ayurvedic.baseDosha,
           prognosis: profile.ayurvedic.prognosis
         }
       });
-    }, 2500);
+    }, 1500);
   };
 
   const resetAnalysis = () => {
