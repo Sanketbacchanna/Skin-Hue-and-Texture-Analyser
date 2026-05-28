@@ -381,3 +381,74 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .nav-brand {
+    font-size: 1.25rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .main-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .glass-card {
+    padding: 1.5rem;
+  }
+
+  .indicators-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .target-box {
+    width: 250px;
+    height: 250px;
+  }
+
+  .disclaimer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 1rem 0.5rem;
+  }
+
+  .nav-link {
+    font-size: 0.9rem;
+  }
+
+  .btn-primary {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  .target-box {
+    width: 70vw;
+    height: 70vw;
+  }
+
+  .indicators-grid {
+    grid-template-columns: 1fr;
+  }
+}
