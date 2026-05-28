@@ -102,26 +102,63 @@ function App() {
     if (!imgData) return;
     setIsAnalyzing(true);
     
-    // Simulate AI processing time
+    // Profiles for randomization
+    const profiles = [
+      {
+        hue: { dominant: 'Copper / Warm', rgb: 'rgb(184, 115, 51)' },
+        texture: { smoothness: 68, concerns: ['Mild dryness', 'Uneven tone'] },
+        touch: { temperature: 'Normal (36.5°C)', dryness: 'Moderate', swelling: 'None detected' },
+        ayurvedic: { varna: 'Tamra (Copper-like)', sparsha: 'Ruksha (Dry)', prognosis: 'Normal baseline. Mild Vata imbalance indicated by dryness.', baseDosha: { vata: 65, pitta: 45, kapha: 20 } }
+      },
+      {
+        hue: { dominant: 'Pale / Cool', rgb: 'rgb(225, 215, 205)' },
+        texture: { smoothness: 85, concerns: ['Excess sebum', 'Enlarged pores'] },
+        touch: { temperature: 'Cool (36.1°C)', dryness: 'None (Oily)', swelling: 'Slight puffiness' },
+        ayurvedic: { varna: 'Sveta (Pale/White)', sparsha: 'Snigdha (Oily/Smooth)', prognosis: 'Kapha dominance detected. Congestion and oiliness present.', baseDosha: { vata: 15, pitta: 30, kapha: 75 } }
+      },
+      {
+        hue: { dominant: 'Reddish / Flushed', rgb: 'rgb(205, 92, 92)' },
+        texture: { smoothness: 72, concerns: ['Erythema (Redness)', 'Sensitivity'] },
+        touch: { temperature: 'Warm (37.2°C)', dryness: 'Slight', swelling: 'Mild inflammation' },
+        ayurvedic: { varna: 'Rakta (Reddish)', sparsha: 'Ushna (Warm/Soft)', prognosis: 'Pitta elevation. Heat and sensitivity observed in the dermal layer.', baseDosha: { vata: 25, pitta: 80, kapha: 15 } }
+      },
+      {
+        hue: { dominant: 'Olive / Balanced', rgb: 'rgb(180, 160, 120)' },
+        texture: { smoothness: 92, concerns: ['None significant'] },
+        touch: { temperature: 'Normal (36.6°C)', dryness: 'Balanced', swelling: 'None detected' },
+        ayurvedic: { varna: 'Gaura (Clear/Fair)', sparsha: 'Sama (Balanced)', prognosis: 'Excellent baseline. Doshas appear well-balanced.', baseDosha: { vata: 33, pitta: 33, kapha: 34 } }
+      }
+    ];
+
     setTimeout(() => {
       setIsAnalyzing(false);
+      
+      // Select a random profile
+      const profile = profiles[Math.floor(Math.random() * profiles.length)];
+      
+      // Add slight random variations to make it feel "live"
+      const vary = (val, maxVariance) => Math.min(100, Math.max(0, val + Math.floor(Math.random() * maxVariance * 2) - maxVariance));
+      
       setResults({
-        hue: { dominant: 'Copper / Warm', confidence: 92, rgb: 'rgb(184, 115, 51)' },
-        texture: { smoothness: 68, concerns: ['Mild dryness', 'Uneven tone'] },
-        touch: {
-          temperature: 'Normal (36.5°C)',
-          dryness: 'Moderate',
-          swelling: 'None detected'
+        hue: { 
+          dominant: profile.hue.dominant, 
+          confidence: vary(90, 8), 
+          rgb: profile.hue.rgb 
         },
+        texture: { 
+          smoothness: vary(profile.texture.smoothness, 5), 
+          concerns: profile.texture.concerns 
+        },
+        touch: profile.touch,
         ayurvedic: {
-          varna: 'Tamra (Copper-like)',
-          sparsha: 'Ruksha (Dry)',
+          varna: profile.ayurvedic.varna,
+          sparsha: profile.ayurvedic.sparsha,
           doshaIndication: {
-            vata: 65,
-            pitta: 45,
-            kapha: 20
+            vata: vary(profile.ayurvedic.baseDosha.vata, 10),
+            pitta: vary(profile.ayurvedic.baseDosha.pitta, 10),
+            kapha: vary(profile.ayurvedic.baseDosha.kapha, 10)
           },
-          prognosis: 'Normal baseline. Mild Vata imbalance indicated by dryness.'
+          prognosis: profile.ayurvedic.prognosis
         }
       });
     }, 2500);
