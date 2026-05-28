@@ -78,7 +78,9 @@ function App() {
 
   useEffect(() => {
     return () => {
-      stopCamera();
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
     };
   }, [stream]);
 
