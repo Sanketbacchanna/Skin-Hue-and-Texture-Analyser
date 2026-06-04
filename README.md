@@ -51,14 +51,15 @@ project-folder/
 
 ## 📸 Screenshots
 
-Add screenshots of your application here.
+<img width="1918" height="909" alt="image" src="https://github.com/user-attachments/assets/8e59510c-9f68-4af9-94d6-f0a0b1dd6fd3" />
+
 
 ## 👨‍💻 Author
 
 **Sanket Bacchanna**
 
 * GitHub: https://github.com/Sanketbacchanna
-* Portfolio: https://sanket-portfolioo.netlify.app/
+* Portfolio: https://portfolio-6kn3.onrender.com/
 
 ## 📄 License
 
