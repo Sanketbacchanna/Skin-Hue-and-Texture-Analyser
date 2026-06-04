@@ -49,50 +49,6 @@ project-folder/
 └── README.md
 ```
 
-## 🚀 Getting Started
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/your-username/project-name.git
-```
-
-### Navigate to Project Folder
-
-```bash
-cd project-name
-```
-
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Start Development Server
-
-```bash
-npm run dev
-```
-
-The application will run at:
-
-```bash
-http://localhost:5173
-```
-
-## 📦 Build for Production
-
-```bash
-npm run build
-```
-
-## 🔍 Preview Production Build
-
-```bash
-npm run preview
-```
-
 ## 📸 Screenshots
 
 Add screenshots of your application here.
