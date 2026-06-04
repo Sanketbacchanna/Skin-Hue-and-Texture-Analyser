@@ -4,7 +4,7 @@ A modern and responsive web application built using **React.js** and **Vite**, d
 
 ## 🌐 Live Demo
 
-🔗 **Website:** https://your-live-link.com
+🔗 **Website:** https://skinhueandtextureanalyser.netlify.app/
 
 ## ✨ Features
 
